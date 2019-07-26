@@ -36,7 +36,7 @@ public class SnWCountingWithDegreeCentrality implements RoutingDecisionEngineLev
     protected Map<DTNHost, Double> startTimestamps;
     protected Map<DTNHost, List<Duration>> connHistory;
     private Map<Integer, Integer> newHeadcount;
-
+ 
     protected int token;
     protected int headCount;
     protected boolean isBinary;
