@@ -146,7 +146,7 @@ public class SnWCountingWithDegreeCentralityTes implements RoutingDecisionEngine
     @Override
     public boolean newMessage(Message m) {
         m.addProperty(MSG_COUNT_PROPERTY, copyPesan()); //untuk menentukan copy
-        return false;
+        return true;
     }
 
     @Override
@@ -224,9 +224,7 @@ public class SnWCountingWithDegreeCentralityTes implements RoutingDecisionEngine
         if (time == timeUpdate) {
             this.token = 1;
 //            this.headCount = this.headCount/2;
-            this.headCount = 0;
-//            this.newHeadcount.put(2, 0);
-//        System.out.println(host+" "+this.headCount);
+            this.newHeadcount.put(2, 0);
         }
         }
     }
@@ -237,14 +235,6 @@ public class SnWCountingWithDegreeCentralityTes implements RoutingDecisionEngine
     }
     private int copyPesan(){
         int lCopy;
-//        if(this.headCount == 0){
-//            return lCopy = 5;
-//        }else
             return lCopy = this.headCount/2;
     }
-
-//    @Override
-//    public Map getResidu() {
-////        return newHeadcount;
-//    }
 }
