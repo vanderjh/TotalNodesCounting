@@ -171,7 +171,6 @@ public class SnWCountingWithDegreeCentrality implements RoutingDecisionEngineLev
                 }
             }
         }
-//        System.out.println(getResidu());
         this.startTimestamps.put(peer, SimClock.getTime());
         partner.startTimestamps.put(thisHost, SimClock.getTime());
 
@@ -257,9 +256,7 @@ public class SnWCountingWithDegreeCentrality implements RoutingDecisionEngineLev
         if (time == timeUpdate) {
             this.token = 1;
             this.headCount = this.headCount/2;
-//            this.headCount = 0;
             this.newHeadcount.put(2, 0);
-//        System.out.println(host+" "+this.headCount);
         
         }
     }
