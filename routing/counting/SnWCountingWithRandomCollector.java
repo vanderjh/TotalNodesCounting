@@ -234,14 +234,12 @@ public class SnWCountingWithRandomCollector implements RoutingDecisionEngineLeve
     }
     private int copyPesan(){
         int lCopy;
-//        if(this.headCount == 0){
-//            return lCopy = 5;
-//        }else
             return lCopy = this.headCount/2;
     }
 
     @Override
     public Map getResidu() {
         return newHeadcount;
-    }
+    } 
+    
 }
