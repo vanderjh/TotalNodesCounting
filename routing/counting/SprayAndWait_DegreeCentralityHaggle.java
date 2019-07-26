@@ -36,7 +36,7 @@ public class SprayAndWait_DegreeCentralityHaggle implements RoutingDecisionEngin
     protected Map<DTNHost, List<Duration>> connHistory;
 
     protected int token;
-    protected int headCount;
+    protected int headCount; 
     protected boolean isBinary;
 
     protected Centrality centrality;
