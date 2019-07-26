@@ -36,7 +36,7 @@ public class SnWCountingWithFairRouting implements RoutingDecisionEngine, HCInte
      * Map for Headcount List
      */
 //    public static Map<DTNHost, Integer> headCountList;
-    protected Map<DTNHost, ArrayList<Double>> neighborsHistory;
+    protected Map<DTNHost, ArrayList<Double>> neighborsHistory; 
 
     protected int token;
     protected int headCount;
