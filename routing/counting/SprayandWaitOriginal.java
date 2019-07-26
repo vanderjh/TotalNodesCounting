@@ -35,7 +35,7 @@ public class SprayandWaitOriginal implements RoutingDecisionEngineLevelUp {
     public SprayandWaitOriginal(SprayandWaitOriginal r) {
         this.initialNrofCopies = r.initialNrofCopies;
         this.isBinary = r.isBinary;
-    }
+    } 
 
     @Override
     public void connectionUp(DTNHost thisHost, DTNHost peer) {
