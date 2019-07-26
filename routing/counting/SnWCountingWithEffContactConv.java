@@ -11,7 +11,7 @@ import routing.community.NodeIn;
  * @author Evander Juliansyah. H 
  * Universitas Sanata Dharma
  */
-public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCInter, NodeIn {
+public class SnWCountingWithEffContactConv implements RoutingDecisionEngineLevelUp, HCInter {
 
     public static final String BINARY_MODE = "binaryMode";
     public static final String SPRAYANDWAIT_NS = "SnWCountingWithEffContactConv";
@@ -19,19 +19,20 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
             + "copies";
     public static final String I_ALFA = "alfa";
     public static final String INITIATOR = "initiator";
+    public static final String TIME_UPDATE = "timeUpdate";
     public static final int DEFAULT_T = 1;
-    public static final int DEFAULT_INIT_NODE = 0;
+    public static final int DEFAULT_H = 0;
+    public static final int DEFAULT_UPDATE = 0;
 
     private Map<Integer, Integer> newHeadcount;
     protected int token;
     protected int headCount;
     protected int nodeInitiator;
-    protected double initial_node;
     public boolean isBinary;
     protected double nilaiAlfa;
-    private int stateTime = 280800;
-    int timeNode = 1;
-
+    private int timeUpdate;
+    private double init_node;
+ 
     public SnWCountingWithEffContactConv(Settings s) {
         if (s.contains(BINARY_MODE)) {
             isBinary = s.getBoolean(BINARY_MODE);
@@ -44,34 +45,28 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
         if (s.contains(I_ALFA)) {
             this.nilaiAlfa = s.getDouble(I_ALFA);
         }
-        this.initial_node = DEFAULT_INIT_NODE;
+        if(s.contains(TIME_UPDATE)){
+            timeUpdate = s.getInt(TIME_UPDATE);
+        }else{
+            this.timeUpdate = DEFAULT_UPDATE;
+        }
         this.token = DEFAULT_T;
+        this.headCount = DEFAULT_H;
     }
 
     public SnWCountingWithEffContactConv(SnWCountingWithEffContactConv r) {
         this.token = r.token;
         this.isBinary = r.isBinary;
         this.nodeInitiator = r.nodeInitiator;
-        this.initial_node = r.initial_node;
         this.nilaiAlfa = r.nilaiAlfa;
         this.newHeadcount = new HashMap<Integer, Integer>();
-        this.headCount = 0;
-//        this.timeNode = 1;
-        this.initial_node = 0;
+        this.headCount = r.headCount;
+        this.timeUpdate = r.timeUpdate;
+        this.init_node = 0;
     }
 
     @Override
     public void connectionUp(DTNHost thisHost, DTNHost peer) {
-        if (thisHost.getAddress() == nodeInitiator && this.initial_node == 0) {
-            this.initial_node = 1;
-        }
-        double time = Math.ceil(SimClock.getTime() / stateTime);
-
-        if ((time > this.timeNode) && this.timeNode != 0) {
-            this.token = 1;
-            this.timeNode = 0;
-            this.newHeadcount.put(2, 0);
-        }
     }
 
     @Override
@@ -88,34 +83,27 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
         if (thisHost.isRadioActive() == true && peer.isRadioActive() == true) {
             effContact(thisHost, peer);
             int a = 1;
-            if (SimClock.getTime() >= stateTime) {
+            if (SimClock.getTime() >= timeUpdate) {
                 a = 2;
             }
 
             if (this.token == 0 && partner.token == 0) {
-                if (this.newHeadcount.size() == 2 && partner.newHeadcount.size() == 2) {
-                    partner.headCount = this.headCount = Math.max(partner.newHeadcount.get(2), this.newHeadcount.get(2));
-                } else {
-                    partner.headCount = this.headCount = Math.max(partner.newHeadcount.get(1), this.newHeadcount.get(1));
-                }
+                partner.headCount = this.headCount = Math.max(this.headCount, partner.headCount);
             } else {
-                if (this.initial_node > partner.initial_node) {
+                if (this.init_node > partner.init_node) {
                     this.token = this.token + partner.token;
                     partner.token = 0;
-                    if (SimClock.getTime() >= stateTime) {
-                        if (this.newHeadcount.size() == 2 && partner.newHeadcount.size() == 2) {
-                            if (Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)) > this.token) {
-                                this.newHeadcount.replace(a, Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)));
-                                partner.newHeadcount.replace(a, Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)));
-                                this.headCount = partner.headCount = this.newHeadcount.get(2);
-                            } else {
-                                this.newHeadcount.replace(a, this.token);
-                                partner.newHeadcount.replace(a, this.token);
-                                this.headCount = partner.headCount = this.token;
-                            }
+                    if (this.newHeadcount.size() == 2 && partner.newHeadcount.size() == 2) {
+                        if (Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)) > this.token) {
+                            this.newHeadcount.replace(a, Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)));
+                            partner.newHeadcount.replace(a, Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)));
+                            this.headCount = partner.headCount = Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2));
+                        } else {
+                            this.newHeadcount.replace(a, this.token);
+                            partner.newHeadcount.replace(a, this.token);
+                            this.headCount = partner.headCount = this.token;
                         }
-                    } 
-                    else {
+                    } else {
                         if (headMax > this.token) {
                             this.newHeadcount.put(a, headMax);
                             partner.newHeadcount.put(a, headMax);
@@ -126,22 +114,20 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
                             partner.headCount = this.headCount = this.token;
                         }
                     }
-                    partner.initial_node = (1 - nilaiAlfa) * partner.initial_node + nilaiAlfa * this.initial_node;
-                    this.initial_node = (1 - nilaiAlfa) * this.initial_node;
+                    partner.init_node = (1 - nilaiAlfa) * partner.init_node + nilaiAlfa * this.init_node;
+                    this.init_node = (1 - nilaiAlfa) * this.init_node;
                 } else {
                     partner.token = partner.token + this.token;
                     this.token = 0;
-                    if (SimClock.getTime() >= stateTime) {
-                        if (this.newHeadcount.size() == 2 && partner.newHeadcount.size() == 2) {
-                            if (Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)) > partner.token) {
-                                this.newHeadcount.replace(a, Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)));
-                                partner.newHeadcount.replace(a, Math.max(this.newHeadcount.get(2), partner.newHeadcount.get(2)));
-                                this.headCount = partner.headCount = partner.newHeadcount.get(2);
-                            } else {
-                                this.newHeadcount.replace(a, partner.token);
-                                partner.newHeadcount.replace(a, partner.token);
-                                this.headCount = partner.headCount = partner.token;
-                            }
+                    if (this.newHeadcount.size() == 2 && partner.newHeadcount.size() == 2) {
+                        if (Math.max(this.newHeadcount.get(a), partner.newHeadcount.get(a)) > partner.token) {
+                            this.newHeadcount.replace(a, Math.max(this.newHeadcount.get(a), partner.newHeadcount.get(a)));
+                            partner.newHeadcount.replace(a, Math.max(this.newHeadcount.get(a), partner.newHeadcount.get(a)));
+                            this.headCount = partner.headCount = partner.newHeadcount.get(a);
+                        } else {
+                            this.newHeadcount.replace(a, partner.token);
+                            partner.newHeadcount.replace(a, partner.token);
+                            this.headCount = partner.headCount = partner.token;
                         }
                     } else {
                         if (headMax > partner.token) {
@@ -154,8 +140,8 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
                             partner.headCount = this.headCount = partner.token;
                         }
                     }
-                    this.initial_node = (1 - nilaiAlfa) * this.initial_node + nilaiAlfa * partner.initial_node;
-                    partner.initial_node = (1 - nilaiAlfa) * partner.initial_node;
+                    this.init_node = (1 - nilaiAlfa) * this.init_node + nilaiAlfa * partner.init_node;
+                    partner.init_node = (1 - nilaiAlfa) * partner.init_node;
                 }
             }
             System.out.println(newHeadcount);
@@ -219,34 +205,34 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
     }
 
     @Override
-    public RoutingDecisionEngine replicate() {
+    public RoutingDecisionEngineLevelUp replicate() {
         return new SnWCountingWithEffContactConv(this);
     }
 
     private SnWCountingWithEffContactConv getOtherSnFDecisionEngine(DTNHost h) {
         MessageRouter otherRouter = h.getRouter();
-        assert otherRouter instanceof DecisionEngineRouter : "This router only works "
+        assert otherRouter instanceof DecisionEngineRouterLevelUp : "This router only works "
                 + " with other routers of same type";
 
-        return (SnWCountingWithEffContactConv) ((DecisionEngineRouter) otherRouter).getDecisionEngine();
+        return (SnWCountingWithEffContactConv) ((DecisionEngineRouterLevelUp) otherRouter).getDecisionEngine();
     }
 
     private void effContact(DTNHost thisHost, DTNHost peer) {
         SnWCountingWithEffContactConv partner = getOtherSnFDecisionEngine(peer);
-        double myOldValue = this.initial_node;
-        double partnerOldValue = partner.initial_node;
+        double myOldValue = this.init_node;
+        double partnerOldValue = partner.init_node;
 
         if (thisHost.getAddress() == nodeInitiator) {
-            if (partner.initial_node > myOldValue) {
-                this.initial_node = (1 - nilaiAlfa) * myOldValue + nilaiAlfa * partner.initial_node;
-            } else if (partner.initial_node <= myOldValue) {
-                this.initial_node = (1 - nilaiAlfa) * myOldValue;
+            if (partner.init_node > myOldValue) {
+                this.init_node = (1 - nilaiAlfa) * myOldValue + nilaiAlfa * partner.init_node;
+            } else if (partner.init_node <= myOldValue) {
+                this.init_node = (1 - nilaiAlfa) * myOldValue;
             }
         } else {
-            if (this.initial_node > partnerOldValue) {
-                partner.initial_node = (1 - nilaiAlfa) * partnerOldValue + nilaiAlfa * this.initial_node;
-            } else if (this.initial_node <= partnerOldValue) {
-                partner.initial_node = (1 - nilaiAlfa) * partnerOldValue;
+            if (this.init_node > partnerOldValue) {
+                partner.init_node = (1 - nilaiAlfa) * partnerOldValue + nilaiAlfa * this.init_node;
+            } else if (this.init_node <= partnerOldValue) {
+                partner.init_node = (1 - nilaiAlfa) * partnerOldValue;
             }
         }
     }
@@ -260,10 +246,18 @@ public class SnWCountingWithEffContactConv implements RoutingDecisionEngine, HCI
     public int getToken() {
         return this.token;
     }
-
+    
     @Override
-    public double getInitiator() {
-        return this.initial_node;
+    public void update(DTNHost host) {
+        double time = SimClock.getTime();
+        if(host.getAddress() == nodeInitiator){
+            this.init_node = 1;
+        }
+        if (time == timeUpdate) {
+            this.token = 1;
+            this.headCount = this.headCount/2;
+            this.newHeadcount.put(2, 0);
+        }
     }
 
 }
