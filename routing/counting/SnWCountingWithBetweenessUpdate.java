@@ -36,7 +36,7 @@ public class SnWCountingWithBetweenessUpdate implements RoutingDecisionEngineLev
 //    protected CommunityDetection community;
     protected CentralityDetection centrality;
     protected int token;
-    public int headCount;
+    public int headCount; 
     public boolean isBinary;
     public int initialNrofCopies;
 
