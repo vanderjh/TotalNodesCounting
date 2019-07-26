@@ -36,7 +36,7 @@ public interface RoutingDecisionEngineLevelUp {
      * objects on either end of the connection to exchange and update
      * information in a simultaneous fashion. This call is provided so that one
      * end of the connection does not perform an update based on newly updated
-     * information from the opposite end of the connection (real life would
+     * information from the opposite end of the connection (real life would 
      * reflect an update based on the old peer information).
      *
      * @param con
